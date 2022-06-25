@@ -1,15 +1,12 @@
 package me.study.kafka;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.clients.admin.TopicListing;
+import me.study.kafka.producer.ClipProducer;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import java.util.Collections;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 @SpringBootApplication
 public class StudyKafkaApplication {
@@ -19,20 +16,13 @@ public class StudyKafkaApplication {
     }
 
     @Bean
-    public ApplicationRunner runner(AdminClient adminClient) {
+    public ApplicationRunner runner(ClipProducer clipProducer) {
         return args -> {
-            Map<String, TopicListing> topics = adminClient.listTopics().namesToListings().get();
-            for (String topicName : topics.keySet()) {
-                TopicListing topicListing = topics.get(topicName);
-                System.out.println(topicListing);
-
-                Map<String, TopicDescription> description = adminClient.describeTopics(Collections.singleton(topicName)).all().get();
-                System.out.println(description);
-
-                if (!topicListing.isInternal()) {
-                    adminClient.deleteTopics(Collections.singleton(topicName));
-                }
-            }
+            clipProducer.async("clip3", "Hello, Clip3-async");
+            clipProducer.sync("clip3", "Hello, Clip3-sync");
+            clipProducer.routingSendBytes("clip3", "Hello, Clip3-routing");
+            clipProducer.routingSendBytes("clip3-bytes", "Hello, Clip3-bytes".getBytes(StandardCharsets.UTF_8));
+            clipProducer.replyingSend("clip3-request", "Ping Clip3");
         };
     }
 }
